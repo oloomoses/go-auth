@@ -1,4 +1,4 @@
-package handler
+package repository
 
 import (
 	"errors"
@@ -8,14 +8,18 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-var db []model.User
-var mutex sync.Mutex
+//
 
-func CreateUser(newUser model.User) (model.User, error) {
-	mutex.Lock()
-	defer mutex.Unlock()
+type UserRepo struct {
+	db    []model.User
+	mutex sync.Mutex
+}
 
-	for _, u := range db {
+func (r *UserRepo) CreateUser(newUser model.User) (model.User, error) {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
+
+	for _, u := range r.db {
 		if u.Username == newUser.Username {
 			return model.User{}, errors.New("username already exits")
 		}
@@ -32,7 +36,7 @@ func CreateUser(newUser model.User) (model.User, error) {
 		Password: hashedPass,
 	}
 
-	db = append(db, hashedUser)
+	r.db = append(r.db, hashedUser)
 
 	return hashedUser, nil
 }
@@ -42,6 +46,12 @@ func hashPassword(password string) (string, error) {
 	return string(bytes), err
 }
 
-// func LoginUser(username string, password string) (mode.User error){
-
-// }
+func (r *UserRepo) VerifyPassword(username string, password string) bool {
+	for _, u := range r.db {
+		if u.Username == username {
+			err := bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(password))
+			return err == nil
+		}
+	}
+	return false
+}

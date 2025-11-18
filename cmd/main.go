@@ -1,20 +1,14 @@
 package main
 
 import (
-	"fmt"
-
+	"github.com/gin-gonic/gin"
 	"github.com/oloomoses/go-auth/internals/handler"
-	"github.com/oloomoses/go-auth/internals/model"
 )
 
 func main() {
-	user := model.User{
-		Username: "Moses",
-		Password: "1234",
-	}
+	r := gin.Default()
 
-	createdUser, _ := handler.CreateUser(user)
+	r.POST("/signup", handler.SignUp)
 
-	fmt.Println(createdUser)
-
+	r.Run(":8080")
 }
