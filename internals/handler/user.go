@@ -8,9 +8,15 @@ import (
 	"github.com/oloomoses/go-auth/internals/repository"
 )
 
-var repo repository.UserRepo
+type UserHandler struct {
+	repo repository.UserRepo
+}
 
-func SignUp(c *gin.Context) {
+func NewUserHandler() UserHandler {
+	return UserHandler{}
+}
+
+func (h *UserHandler) SignUp(c *gin.Context) {
 	var input model.User
 
 	if err := c.ShouldBindJSON(&input); err != nil {
@@ -23,7 +29,7 @@ func SignUp(c *gin.Context) {
 		return
 	}
 
-	user, err := repo.CreateUser(input)
+	user, err := h.repo.CreateUser(input)
 
 	if err != nil {
 		if err.Error() == "username already exits" {
@@ -38,4 +44,29 @@ func SignUp(c *gin.Context) {
 		"Message": "User created",
 		"user":    user,
 	})
+}
+
+func (h *UserHandler) Login(c *gin.Context) {
+	var input model.User
+
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err})
+		return
+	}
+
+	username := input.Username
+	password := input.Password
+	if username == "" || password == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "username and password cannot be blank"})
+		return
+	}
+
+	isLoggedIn := h.repo.VerifyPassword(username, password)
+
+	if !isLoggedIn {
+		c.JSON(http.StatusExpectationFailed, gin.H{"error": "Login failed"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"Message": "Loggin Success!"})
 }

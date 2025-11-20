@@ -8,7 +8,10 @@ import (
 func main() {
 	r := gin.Default()
 
-	r.POST("/signup", handler.SignUp)
+	userAuth := handler.NewUserHandler()
+
+	r.POST("/signup", userAuth.SignUp)
+	r.POST("/signin", userAuth.Login)
 
 	r.Run(":8080")
 }

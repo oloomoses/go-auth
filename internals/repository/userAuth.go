@@ -15,6 +15,10 @@ type UserRepo struct {
 	mutex sync.Mutex
 }
 
+func NewUserRepo() UserRepo {
+	return UserRepo{}
+}
+
 func (r *UserRepo) CreateUser(newUser model.User) (model.User, error) {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
