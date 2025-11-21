@@ -2,6 +2,7 @@ package handler
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/oloomoses/go-auth/internals/model"
@@ -29,6 +30,8 @@ func (h *UserHandler) SignUp(c *gin.Context) {
 		return
 	}
 
+	input.Username = strings.ToLower(input.Username)
+
 	user, err := h.repo.CreateUser(input)
 
 	if err != nil {
@@ -54,7 +57,7 @@ func (h *UserHandler) Login(c *gin.Context) {
 		return
 	}
 
-	username := input.Username
+	username := strings.ToLower(input.Username)
 	password := input.Password
 	if username == "" || password == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "username and password cannot be blank"})
