@@ -4,6 +4,7 @@ import (
 	"errors"
 	"sync"
 
+	"github.com/oloomoses/go-auth/internals/auth"
 	"github.com/oloomoses/go-auth/internals/model"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -19,20 +20,20 @@ func NewUserRepo() UserRepo {
 	return UserRepo{}
 }
 
-func (r *UserRepo) CreateUser(newUser model.User) (model.User, error) {
+func (r *UserRepo) CreateUser(newUser model.User) (model.User, string, error) {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
 
 	for _, u := range r.db {
 		if u.Username == newUser.Username {
-			return model.User{}, errors.New("username already exits")
+			return model.User{}, "", errors.New("username already exits")
 		}
 	}
 
 	hashedPass, err := hashPassword(newUser.Password)
 
 	if err != nil {
-		return model.User{}, err
+		return model.User{}, "", err
 	}
 
 	hashedUser := model.User{
@@ -40,9 +41,15 @@ func (r *UserRepo) CreateUser(newUser model.User) (model.User, error) {
 		Password: hashedPass,
 	}
 
+	token, err := auth.GenerateToken(hashedUser.Username)
+
+	if err != nil {
+		return model.User{}, "", err
+	}
+
 	r.db = append(r.db, hashedUser)
 
-	return hashedUser, nil
+	return hashedUser, token, nil
 }
 
 func hashPassword(password string) (string, error) {

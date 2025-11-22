@@ -32,7 +32,7 @@ func (h *UserHandler) SignUp(c *gin.Context) {
 
 	input.Username = strings.ToLower(input.Username)
 
-	user, err := h.repo.CreateUser(input)
+	user, token, err := h.repo.CreateUser(input)
 
 	if err != nil {
 		if err.Error() == "username already exits" {
@@ -46,6 +46,7 @@ func (h *UserHandler) SignUp(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{
 		"Message": "User created",
 		"user":    user,
+		"token":   token,
 	})
 }
 
