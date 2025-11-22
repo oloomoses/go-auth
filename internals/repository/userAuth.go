@@ -57,12 +57,18 @@ func hashPassword(password string) (string, error) {
 	return string(bytes), err
 }
 
-func (r *UserRepo) VerifyPassword(username string, password string) bool {
+func (r *UserRepo) VerifyPassword(username string, password string) (string, bool) {
+	token, err := auth.GenerateToken(username)
+
+	if err != nil {
+		return "", false
+	}
+
 	for _, u := range r.db {
 		if u.Username == username {
 			err := bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(password))
-			return err == nil
+			return token, err == nil
 		}
 	}
-	return false
+	return token, false
 }

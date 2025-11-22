@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/oloomoses/go-auth/internals/auth"
 	"github.com/oloomoses/go-auth/internals/model"
 	"github.com/oloomoses/go-auth/internals/repository"
 )
@@ -43,10 +44,11 @@ func (h *UserHandler) SignUp(c *gin.Context) {
 		return
 	}
 
+	setCookie(c, token)
+
 	c.JSON(http.StatusCreated, gin.H{
 		"Message": "User created",
 		"user":    user,
-		"token":   token,
 	})
 }
 
@@ -65,12 +67,47 @@ func (h *UserHandler) Login(c *gin.Context) {
 		return
 	}
 
-	isLoggedIn := h.repo.VerifyPassword(username, password)
+	token, isLoggedIn := h.repo.VerifyPassword(username, password)
 
 	if !isLoggedIn {
 		c.JSON(http.StatusExpectationFailed, gin.H{"error": "Login failed"})
 		return
 	}
 
+	setCookie(c, token)
+
 	c.JSON(http.StatusOK, gin.H{"Message": "Loggin Success!"})
+}
+
+func (h *UserHandler) Logout(c *gin.Context) {
+	c.SetCookie("jwt", "", -1, "/", "", false, true)
+	c.JSON(200, gin.H{"Message": "Bye"})
+}
+
+func (h *UserHandler) MeWithHeader(c *gin.Context) {
+	token, err := c.Cookie("jwt")
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "no cookie"})
+		return
+	}
+
+	claim, err := auth.ValidateToken(token)
+
+	if err != nil {
+		c.JSON(401, gin.H{"error": "Bad Token"})
+		return
+	}
+
+	c.JSON(200, gin.H{"Message": "Hello " + strings.ToTitle(claim.Username)})
+}
+
+func (h *UserHandler) Me(c *gin.Context) {
+	username := c.GetString("username")
+
+	c.JSON(200, gin.H{"Hello ": username})
+}
+
+func setCookie(c *gin.Context, token string) {
+	c.SetCookie("jwt", token, 24*3600, "/", "", false, true)
 }
